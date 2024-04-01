@@ -18,26 +18,25 @@ router_initial = [
         {
             "router-name": "A",
             "link": ["B", "C"],
+            "cost-link": [1, 1],
             "server-port": 1024,
             "con-network": ["192.168.4.0/24", "192.168.4.1/24"]
         },
         {
             "router-name": "B",
             "link": ["A", "D", "C"],
+            "cost-link": [1, 1, 1],
             "server-port": 1025,
             "con-network": ["192.168.2.0/24"]
         },
         {
             "router-name": "C",
             "link": ["B", "F"],
+            "cost-link": [1, 1],
             "server-port": 1026,
             "con-network": ["192.168.3.0/24"]
         }
     ]
-
-
-
-  
 
 # i = dict, string | o = boolean ---Help: Main
 def find_router(router_dict, router_name):
@@ -70,7 +69,6 @@ def selfName(router_dict):
         print("selfSubnet => " + str(routerName[0]))
         return routerName
     
-  
 # i = subnet | o = routing_table ---Help: selfSubnet
 def update_subnet(subnet_array):
     global routing_table
@@ -89,8 +87,7 @@ def flattenList(nested_list):
 def generate_routing_table(subnet_array):
     global routing_table
     for subnet in subnet_array:
-        # network, _, subnet_length = subnet.partition('/')
-        routing_table.append([192, '-', 0])
+        routing_table.append([192, '-', 1])
     return routing_table
 
 # i = routing_table | o = None
@@ -100,12 +97,25 @@ def print_routing():
     for i in range(len(routing_table)):
         print("|", routing_table[i][0], "|      ", routing_table[i][1], "     |      ", routing_table[i][2], "     |")
     
-
 def client(server_port, server_ip, con_network):
     client_socket = socket(AF_INET, SOCK_DGRAM)
     message = json.dumps(sendData).encode()#
     client_socket.sendto(message, (server_ip, server_port))
     client_socket.close()
+
+    # def splitMsg(massage):
+
+def findLinkName(lists):
+    for list in lists:
+        return list["link"]
+
+# i = dicts, lists | O = List of port
+def findListPort(dicts, lists):
+    port_numbers = []
+    for list in dicts:
+        if list["router-name"] in lists:
+            port_numbers.append(list["server-port"])
+    return port_numbers
 
 def server(server_port):
 
@@ -129,6 +139,13 @@ def main():
         generate_routing_table(subnet)
         update_subnet(subnet)
         selfName(online_list)
+
+        nameList = findLinkName(online_list)
+        linked_ports = findListPort(router_initial, nameList)
+        print(linked_ports)
+        # for linked_router, port_number in linked_ports.items():
+        #     print("Router:", linked_router, "Port Number:", port_number)
+        # findListPort(online_list, nameList)
         
         sendData = str(update_subnet(subnet)) + "|" + str(selfName(online_list))
 
@@ -141,7 +158,6 @@ def main():
         
         client_thread = threading.Thread(target=client, args=(router["server-port"], 'localhost', router["con-network"]))
         client_thread.start()
-
 
 if __name__ == "__main__":
       main()
