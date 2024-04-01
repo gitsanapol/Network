@@ -141,7 +141,7 @@ def main():
         
         client_thread = threading.Thread(target=client, args=(router["server-port"], 'localhost', router["con-network"]))
         client_thread.start()
-    print("Main done")
+
 
 if __name__ == "__main__":
       main()
