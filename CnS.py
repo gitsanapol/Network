@@ -26,12 +26,12 @@ recvData=""
 
 sleep_time = random.uniform(0.1, 2.5)
 
-router_initial = [ #**** need to input in a-z order ****
+router_initial = [ #   **** need to input in a-z order ****
         {
             "router-name": "A",
             "link": ["B", "D"],
             "cost-link": [1, 1],
-            "connection": [0, 1], # 0 for internal, 1 for external
+            "connection": [0, 0], # 0 for internal, 1 for external
             "server-port": 1024,
             "con-network": ["192.168.1.0/24", "192.168.4.0/24"]
         },
@@ -39,7 +39,7 @@ router_initial = [ #**** need to input in a-z order ****
             "router-name": "B",
             "link": ["A", "C", "D"],
             "cost-link": [1, 1, 1],
-            "connection": [0, 0, 1], # 0 for internal, 1 for external
+            "connection": [0, 0, 0], # 0 for internal, 1 for external
             "server-port": 1025,
             "con-network": ["192.168.2.0/24"]
         },
@@ -47,7 +47,7 @@ router_initial = [ #**** need to input in a-z order ****
             "router-name": "C",
             "link": ["B", "F"],
             "cost-link": [1, 1],
-            "connection": [0, 1], # 0 for internal, 1 for external
+            "connection": [0, 0], # 0 for internal, 1 for external
             "server-port": 1026,
             "con-network": ["192.168.3.0/24"]
         },
