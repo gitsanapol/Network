@@ -141,11 +141,10 @@ def client(clientIP, clientPort, con_network):
         client_socket = socket(AF_INET, SOCK_DGRAM)
         message = json.dumps(sendData).encode()
         client_socket.sendto(message, (clientIP, clientPort))
-        print(f"ClientT => msg to {clientIP} at {clientPort}")
+        # print(f"ClientT => msg to {clientIP} at {clientPort}")
         client_socket.close()
-        time.sleep(sleep_time)
+        time.sleep(1.5)
 
-    # def splitMsg(massage):
 
 def findLinkName(lists):
     for list in lists:
@@ -196,7 +195,7 @@ def server(serverIP, clientPort):
         print_routing()
         
         #reset
-        time.sleep(sleep_time)
+        # time.sleep(sleep_time)
         
 
         #put subnet own subnet in
