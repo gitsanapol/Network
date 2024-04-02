@@ -24,7 +24,7 @@ flattened_list = []
 sendData=""
 recvData=""
 
-sleep_time = random.uniform(0.1, 1.5)
+sleep_time = random.uniform(0.1, 2.5)
 
 router_initial = [
         {
@@ -133,15 +133,23 @@ def findListPort(dicts, lists):
 
 # i = list, list | o = routing_table
 # def pullSelfSubnet(subnet, cost):
+
+def reset_routing_table():
+    global routing_table
+    routing_table = []  # Resetting the routing table
+    threading.Timer(30, reset_routing_table).start()  # Restart the timer for the next reset
+    print("Routing table reset Routing table reset Routing table reset Routing table reset Routing table reset")
+
     
 
 def server(serverIP, clientPort):
+    global routing_table
     server_socket = socket(AF_INET, SOCK_DGRAM)
     server_socket.bind((serverIP, clientPort))
     print(f"ServerT => Router {clientPort} is ready to receive")
+    reset_routing_table()
     
     while True:
-        global routing_table
         global routerSubnet
         message, addr = server_socket.recvfrom(1024)
         print(f"ServerT => Received from Router {clientPort}: {message.decode()}")
@@ -160,7 +168,7 @@ def server(serverIP, clientPort):
         
         #reset
         time.sleep(sleep_time)
-        # routing_table = []
+        
 
         #put subnet own subnet in
         for i in routerSubnet:
@@ -184,6 +192,8 @@ def server(serverIP, clientPort):
         routing_table = [list(row) for row in unique_data_tuples]
 
         print(routing_table)
+
+        
         continue
     
 def main():
@@ -213,6 +223,7 @@ def main():
         for port in linked_ports:
             client_thread = threading.Thread(target=client, args=(IP_host ,port, router["con-network"]))
             client_thread.start()
+
 
 if __name__ == "__main__":
       main()
