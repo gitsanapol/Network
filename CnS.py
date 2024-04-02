@@ -2,6 +2,13 @@ from socket import *
 import numpy as np
 import threading
 import json
+import time
+# import socket
+
+hostname = gethostname()
+IP_host = gethostbyname(hostname)
+print("My IP Address:" + IP_host)
+list_ip = [str(IP_host), "192.168.195.38"]
 
 online_list = []
 nexthop = []
@@ -13,6 +20,11 @@ routerName = []
 flattened_list = []
 sendData=""
 recvData=""
+
+# List Con-network
+listConNetwork = []
+# RouterName
+tempRouterName = ""
 
 router_initial = [
         {
@@ -66,13 +78,13 @@ def selfName(router_dict):
         routerName.append(router["router-name"])
         flattenList(routerName)
         routerName = flattened_list
-        print("selfSubnet => " + str(routerName[0]))
+        # print("selfSubnet => " + str(routerName[0]))
         return routerName
     
 # i = subnet | o = routing_table ---Help: selfSubnet
 def update_subnet(subnet_array):
     global routing_table
-    print(range(len(subnet_array)))
+    # print(range(len(subnet_array)))
     for i in range(len(subnet_array)):
         routing_table[i][0] = subnet_array[i]
     return routing_table
@@ -101,6 +113,7 @@ def client(server_port, server_ip, con_network):
     client_socket = socket(AF_INET, SOCK_DGRAM)
     message = json.dumps(sendData).encode()#
     client_socket.sendto(message, (server_ip, server_port))
+    print(f"ClientT => {message} to {server_ip} at {server_port}")
     client_socket.close()
 
     # def splitMsg(massage):
@@ -118,6 +131,8 @@ def findListPort(dicts, lists):
     return port_numbers
 
 def server(server_port):
+    global tempRouterName
+    global listConNetwork
 
     server_socket = socket(AF_INET, SOCK_DGRAM)
     server_socket.bind(('localhost', server_port))
@@ -126,6 +141,24 @@ def server(server_port):
     while True:
         message, addr = server_socket.recvfrom(1024)
         print(f"ServerT => Received from Router {server_port}: {message.decode()}")
+
+        '''
+        # Splitting the text by '|'
+        sentence = (message.decode())
+        senTenceText = sentence.split('|')
+        # Processing the first part
+        data_part = eval(senTenceText[0].replace('"'," "))
+        # Printing each item in the first part
+        for sublist in data_part:
+             for item in sublist:
+                listConNetwork.append(item)
+        # Processing the second part
+        tempRouterName = eval(senTenceText[1].replace('"'," ")) 
+        
+        print(listConNetwork)
+        print(tempRouterName)
+        '''
+
         # Assuming received message contains the routing table data in JSON format
         recvData = json.loads(message.decode())
         print_routing()
@@ -155,6 +188,8 @@ def main():
     for router in online_list:
         server_thread = threading.Thread(target=server, args=(router["server-port"],))
         server_thread.start()
+
+        time.sleep(1)
         
         client_thread = threading.Thread(target=client, args=(router["server-port"], 'localhost', router["con-network"]))
         client_thread.start()
