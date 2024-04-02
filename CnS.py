@@ -3,7 +3,8 @@ import numpy as np
 import threading
 import json
 import time
-# import socket
+import ast
+
 
 hostname = gethostname()
 IP_host = gethostbyname(hostname)
@@ -84,7 +85,6 @@ def selfName(router_dict):
 # i = subnet | o = routing_table ---Help: selfSubnet
 def update_subnet(subnet_array):
     global routing_table
-    # print(range(len(subnet_array)))
     for i in range(len(subnet_array)):
         routing_table[i][0] = subnet_array[i]
     return routing_table
@@ -109,12 +109,14 @@ def print_routing():
     for i in range(len(routing_table)):
         print("|", routing_table[i][0], "|      ", routing_table[i][1], "     |      ", routing_table[i][2], "     |")
     
-def client(server_port, server_ip, con_network):
-    client_socket = socket(AF_INET, SOCK_DGRAM)
-    message = json.dumps(sendData).encode()#
-    client_socket.sendto(message, (server_ip, server_port))
-    print(f"ClientT => {message} to {server_ip} at {server_port}")
-    client_socket.close()
+def client(clientIP, clientPort, con_network):
+    while True:
+        client_socket = socket(AF_INET, SOCK_DGRAM)
+        message = json.dumps(sendData).encode()
+        client_socket.sendto(message, (clientIP, clientPort))
+        # print(f"ClientT => {message} to {clientIP} at {clientPort}")
+        client_socket.close()
+        time.sleep(5)
 
     # def splitMsg(massage):
 
@@ -130,34 +132,44 @@ def findListPort(dicts, lists):
             port_numbers.append(list["server-port"])
     return port_numbers
 
-def server(server_port):
+# i = list, list | o = routing_table
+# def pullSelfSubnet(subnet, cost):
+    
+
+def server(serverIP, clientPort):
     global tempRouterName
     global listConNetwork
 
     server_socket = socket(AF_INET, SOCK_DGRAM)
-    server_socket.bind(('localhost', server_port))
-    print(f"ServerT => Router {server_port} is ready to receive")
+    server_socket.bind((serverIP, clientPort))
+    print(f"ServerT => Router {clientPort} is ready to receive")
     
     while True:
+        global routing_table
+        listConNetwork = []
         message, addr = server_socket.recvfrom(1024)
-        print(f"ServerT => Received from Router {server_port}: {message.decode()}")
+        print(f"ServerT => Received from Router {clientPort}: {message.decode()}")
 
-        '''
         # Splitting the text by '|'
         sentence = (message.decode())
-        senTenceText = sentence.split('|')
-        # Processing the first part
-        data_part = eval(senTenceText[0].replace('"'," "))
-        # Printing each item in the first part
-        for sublist in data_part:
-             for item in sublist:
-                listConNetwork.append(item)
-        # Processing the second part
-        tempRouterName = eval(senTenceText[1].replace('"'," ")) 
-        
-        print(listConNetwork)
-        print(tempRouterName)
-        '''
+        network_list, network_name = sentence.split('|')
+        network_list = network_list[1:]
+        network_name = network_name[:-1]
+
+        #Transfer string -> list
+        network_list = ast.literal_eval(network_list)
+        network_name = ast.literal_eval(network_name)
+        print(f"serverT => {network_list[0]}")
+        print(f"serverT => {network_name}")
+
+        # routing_table = []
+        # pullSelfRouting(routerSubnet, )
+        # pullFriendRouting()
+
+        # Add info from other router to routing_table+
+        # for list in listConNetwork:
+        #     newRoutingInfo = list
+        #     routing_table.append(newRoutingInfo)
 
         # Assuming received message contains the routing table data in JSON format
         recvData = json.loads(message.decode())
@@ -166,33 +178,33 @@ def server(server_port):
 
 def main():
     global sendData
+    global routing_table
     onlineRouter_input = input("Main => Enter name of router: ")
     if find_router(router_initial, onlineRouter_input):
-        selfSubnet(online_list)
-        generate_routing_table(subnet)
-        update_subnet(subnet)
+        routerSubnet = selfSubnet(online_list)
+        generate_routing_table(routerSubnet)
+        update_subnet(routerSubnet)
         selfName(online_list)
 
         nameList = findLinkName(online_list)
-        linked_ports = findListPort(router_initial, nameList)
-        print(linked_ports)
-        # for linked_router, port_number in linked_ports.items():
-        #     print("Router:", linked_router, "Port Number:", port_number)
-        # findListPort(online_list, nameList)
+        linked_ports = findListPort(router_initial, nameList) #find port of link, use used in Client
         
-        sendData = str(update_subnet(subnet)) + "|" + str(selfName(online_list))
+        print(f"main => {routing_table} | {selfName(online_list)}")
+        sendData = str(routing_table) + "|" + str(selfName(online_list))
+        
 
     else:
         print("No such router in the list.")
 
     for router in online_list:
-        server_thread = threading.Thread(target=server, args=(router["server-port"],))
+        server_thread = threading.Thread(target=server, args=(IP_host, router["server-port"],))
         server_thread.start()
 
         time.sleep(1)
         
-        client_thread = threading.Thread(target=client, args=(router["server-port"], 'localhost', router["con-network"]))
-        client_thread.start()
+        for port in linked_ports:
+            client_thread = threading.Thread(target=client, args=(IP_host ,port, router["con-network"]))
+            client_thread.start()
 
 if __name__ == "__main__":
       main()
