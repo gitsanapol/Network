@@ -29,24 +29,51 @@ sleep_time = random.uniform(0.1, 2.5)
 router_initial = [
         {
             "router-name": "A",
-            "link": ["B", "C"],
+            "link": ["B", "D"],
             "cost-link": [1, 1],
+            "connection": [0, 0], # 0 for internal, 1 for external
             "server-port": 1024,
-            "con-network": ["192.168.1.0/24", "192.168.1.1/24"]
+            "con-network": ["192.168.1.0/24", "192.168.4.0/24"]
         },
         {
             "router-name": "B",
             "link": ["A", "D", "C"],
             "cost-link": [1, 1, 1],
+            "connection": [0, 0, 0], # 0 for internal, 1 for external
             "server-port": 1025,
             "con-network": ["192.168.2.0/24"]
         },
         {
             "router-name": "C",
-            "link": ["B", "A"],
+            "link": ["B", "F"],
             "cost-link": [1, 1],
+            "connection": [0, 0], # 0 for internal, 1 for external
             "server-port": 1026,
             "con-network": ["192.168.3.0/24"]
+        },
+        {
+            "router-name": "D",
+            "link": ["A", "B", "E"],
+            "cost-link": [1, 1, 1],
+            "connection": [0, 0, 0], # 0 for internal, 1 for external
+            "server-port": 1027,
+            "con-network": ["192.168.4.0/24"]
+        },
+        {
+            "router-name": "E",
+            "link": ["D", "F"],
+            "cost-link": [1, 1],
+            "connection": [0, 0], # 0 for internal, 1 for external
+            "server-port": 1028,
+            "con-network": ["192.168.6.0/24"]
+        },
+        {
+            "router-name": "F",
+            "link": ["C", "E"],
+            "cost-link": [1, 1],
+            "connection": [0, 0], # 0 for internal, 1 for external
+            "server-port": 1029,
+            "con-network": ["192.168.5.0/24"]
         }
     ]
 
@@ -109,11 +136,12 @@ def print_routing():
         print("|", routing_table[i][0], "|      ", routing_table[i][1], "     |      ", routing_table[i][2], "     |")
     
 def client(clientIP, clientPort, con_network):
+    global sendData
     while True:
         client_socket = socket(AF_INET, SOCK_DGRAM)
         message = json.dumps(sendData).encode()
         client_socket.sendto(message, (clientIP, clientPort))
-        # print(f"ClientT => {message} to {clientIP} at {clientPort}")
+        print(f"ClientT => msg to {clientIP} at {clientPort}")
         client_socket.close()
         time.sleep(sleep_time)
 
@@ -137,13 +165,14 @@ def findListPort(dicts, lists):
 def reset_routing_table():
     global routing_table
     routing_table = []  # Resetting the routing table
-    threading.Timer(30, reset_routing_table).start()  # Restart the timer for the next reset
+    threading.Timer(180, reset_routing_table).start()  # Restart the timer for the next reset
     print("Routing table reset Routing table reset Routing table reset Routing table reset Routing table reset")
 
     
 
 def server(serverIP, clientPort):
     global routing_table
+    global sendData
     server_socket = socket(AF_INET, SOCK_DGRAM)
     server_socket.bind((serverIP, clientPort))
     print(f"ServerT => Router {clientPort} is ready to receive")
@@ -161,8 +190,8 @@ def server(serverIP, clientPort):
         #Transfer string -> list
         network_list = ast.literal_eval(network_list)
         network_name = ast.literal_eval(network_name)
-        print(f"serverT => {network_list}")
-        print(f"serverT => {network_name}")
+        # print(f"serverT => {network_list}")
+        # print(f"serverT => {network_name}")
 
         print_routing()
         
@@ -190,9 +219,32 @@ def server(serverIP, clientPort):
         data_tuples = [tuple(row) for row in routing_table]
         unique_data_tuples = set(data_tuples)
         routing_table = [list(row) for row in unique_data_tuples]
+        routing_table.sort(key=lambda x: x[2])
 
-        print(routing_table)
+        #delete higher cost
+        lowest_cost = {}
+        for row in routing_table:
+            dest_subnet = row[0]
+            cost = row[2]
+            if dest_subnet not in lowest_cost:
+                lowest_cost[dest_subnet] = cost
+            else:
+                lowest_cost[dest_subnet] = min(lowest_cost[dest_subnet], cost)
+        routing_table = [row for row in routing_table if row[2] == lowest_cost[row[0]]]
+        
+        unique_combinations = set()
+        for item in routing_table:
+            item_tuple = (item[0], item[2])# Convert the relevant elements to a tuple
+            
+            if item_tuple in unique_combinations: # If the tuple is already in the set, remove the item
+                routing_table.remove(item)
+            else:
+                unique_combinations.add(item_tuple) # Add the tuple to the set
 
+        # print(routing_table)
+
+        # print(f"serverT => {routing_table} | {selfName(online_list)}")
+        sendData = str(routing_table) + "|" + str(selfName(online_list))  
         
         continue
     
@@ -210,7 +262,7 @@ def main():
         nameList = findLinkName(online_list)
         linked_ports = findListPort(router_initial, nameList) #find port of link, use used in Client
         
-        print(f"main => {routing_table} | {selfName(online_list)}")
+        # print(f"main => {routing_table} | {selfName(online_list)}")
         sendData = str(routing_table) + "|" + str(selfName(online_list))  
     else:
         print("No such router in the list.")
