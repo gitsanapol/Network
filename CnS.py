@@ -11,7 +11,7 @@ import random
 hostname = gethostname()
 IP_host = gethostbyname(hostname)
 print("My IP Address:" + IP_host)
-list_ip = [str(IP_host), "192.168.195.38"]
+list_ip = [str(IP_host), "192.168.1.225"]
 
 online_list = []
 nexthop = []
@@ -26,20 +26,20 @@ recvData=""
 
 sleep_time = random.uniform(0.1, 2.5)
 
-router_initial = [
+router_initial = [ #**** need to input in a-z order ****
         {
             "router-name": "A",
             "link": ["B", "D"],
             "cost-link": [1, 1],
-            "connection": [1, 0], # 0 for internal, 1 for external
+            "connection": [0, 1], # 0 for internal, 1 for external
             "server-port": 1024,
             "con-network": ["192.168.1.0/24", "192.168.4.0/24"]
         },
         {
             "router-name": "B",
-            "link": ["A", "D", "C"],
+            "link": ["A", "C", "D"],
             "cost-link": [1, 1, 1],
-            "connection": [1, 0, 0], # 0 for internal, 1 for external
+            "connection": [0, 0, 1], # 0 for internal, 1 for external
             "server-port": 1025,
             "con-network": ["192.168.2.0/24"]
         },
@@ -47,7 +47,7 @@ router_initial = [
             "router-name": "C",
             "link": ["B", "F"],
             "cost-link": [1, 1],
-            "connection": [0, 0], # 0 for internal, 1 for external
+            "connection": [0, 1], # 0 for internal, 1 for external
             "server-port": 1026,
             "con-network": ["192.168.3.0/24"]
         },
@@ -145,7 +145,7 @@ def client(clientIP, clientPort, con_network):
         client_socket = socket(AF_INET, SOCK_DGRAM)
         message = json.dumps(sendData).encode()
         client_socket.sendto(message, (clientIP, clientPort))
-        # print(f"ClientT => msg to {clientIP} at {clientPort}")
+        print(f"ClientT => msg to {clientIP} at {clientPort}")
         client_socket.close()
         time.sleep(1.5)
 
@@ -158,8 +158,9 @@ def findLinkName(lists):
 def findListPort(dicts, lists):
     port_numbers = []
     for list in dicts:
-        if list["router-name"] in lists:
-            port_numbers.append(list["server-port"])
+        for name in lists:
+            if list["router-name"] == name:
+                port_numbers.append(list["server-port"])
     return port_numbers
 
 # i = list, list | o = routing_table
@@ -176,6 +177,8 @@ def reset_routing_table():
 def server(serverIP, clientPort):
     global routing_table
     global sendData
+    global onlineRouter_input
+
     server_socket = socket(AF_INET, SOCK_DGRAM)
     server_socket.bind((serverIP, clientPort))
     print(f"ServerT => Router {clientPort} is ready to receive")
@@ -212,11 +215,13 @@ def server(serverIP, clientPort):
         
         #put subnet from friend in
         for j in network_list:
-            subnet_friend = j[0]
-            next_hop_friend = network_name[0]
-            cost_friend = j[2] + 1
-            new_item_friend = [subnet_friend, next_hop_friend, cost_friend]
-            routing_table.append(new_item_friend)
+            #fix count to infinity
+            if j[1] is not onlineRouter_input:
+                subnet_friend = j[0]
+                next_hop_friend = network_name[0]
+                cost_friend = j[2] + 1
+                new_item_friend = [subnet_friend, next_hop_friend, cost_friend]
+                routing_table.append(new_item_friend)
 
         #delete Duplicated subnet
         data_tuples = [tuple(row) for row in routing_table]
@@ -255,6 +260,7 @@ def main():
     global sendData
     global routing_table
     global routerSubnet
+    global onlineRouter_input
     onlineRouter_input = input("Main => Enter name of router: ")
     if find_router(router_initial, onlineRouter_input):
         routerSubnet = selfSubnet(online_list)
