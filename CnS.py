@@ -31,7 +31,7 @@ router_initial = [
             "router-name": "A",
             "link": ["B", "D"],
             "cost-link": [1, 1],
-            "connection": [0, 0], # 0 for internal, 1 for external
+            "connection": [1, 0], # 0 for internal, 1 for external
             "server-port": 1024,
             "con-network": ["192.168.1.0/24", "192.168.4.0/24"]
         },
@@ -39,7 +39,7 @@ router_initial = [
             "router-name": "B",
             "link": ["A", "D", "C"],
             "cost-link": [1, 1, 1],
-            "connection": [0, 0, 0], # 0 for internal, 1 for external
+            "connection": [1, 0, 0], # 0 for internal, 1 for external
             "server-port": 1025,
             "con-network": ["192.168.2.0/24"]
         },
@@ -76,6 +76,10 @@ router_initial = [
             "con-network": ["192.168.5.0/24"]
         }
     ]
+
+def getConnection(dicts):
+    ConnList = dicts[0]["connection"]
+    return ConnList
 
 # i = dict, string | o = boolean ---Help: Main
 def find_router(router_dict, router_name):
@@ -164,7 +168,7 @@ def findListPort(dicts, lists):
 def reset_routing_table():
     global routing_table
     routing_table = []  # Resetting the routing table
-    threading.Timer(180, reset_routing_table).start()  # Restart the timer for the next reset
+    threading.Timer(60, reset_routing_table).start()  # Restart the timer for the next reset
     print("Routing table reset Routing table reset Routing table reset Routing table reset Routing table reset")
 
     
@@ -231,6 +235,7 @@ def server(serverIP, clientPort):
                 lowest_cost[dest_subnet] = min(lowest_cost[dest_subnet], cost)
         routing_table = [row for row in routing_table if row[2] == lowest_cost[row[0]]]
         
+        #subnet same, cost same => delete one of them
         unique_combinations = set()
         for item in routing_table:
             item_tuple = (item[0], item[2])# Convert the relevant elements to a tuple
@@ -244,7 +249,6 @@ def server(serverIP, clientPort):
 
         # print(f"serverT => {routing_table} | {selfName(online_list)}")
         sendData = str(routing_table) + "|" + str(selfName(online_list))  
-        
         continue
     
 def main():
@@ -260,6 +264,8 @@ def main():
 
         nameList = findLinkName(online_list)
         linked_ports = findListPort(router_initial, nameList) #find port of link, use used in Client
+
+        connectionList = getConnection(online_list)
         
         # print(f"main => {routing_table} | {selfName(online_list)}")
         sendData = str(routing_table) + "|" + str(selfName(online_list))  
@@ -271,8 +277,9 @@ def main():
 
         time.sleep(sleep_time)
         
-        for port in linked_ports:
-            client_thread = threading.Thread(target=client, args=(IP_host ,port, router["con-network"]))
+        for conn, port in zip(connectionList, linked_ports):
+            conn = int(conn)
+            client_thread = threading.Thread(target=client, args=(list_ip[conn] ,port, router["con-network"]))
             client_thread.start()
 
 
