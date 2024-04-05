@@ -276,6 +276,7 @@ def main():
         linked_ports = findListPort(router_initial, nameList) #find port of link, use used in Client
 
         connectionList = getConnection(online_list)
+        print_routing()
         
         # print(f"main => {routing_table} | {selfName(online_list)}")
         sendData = str(routing_table) + "|" + str(selfName(online_list))  
