@@ -26,56 +26,63 @@ recvData=""
 
 sleep_time = random.uniform(0.1, 2.5)
 
-router_initial = [ #   **** need to input in a-z order ****
-        {
-            "router-name": "A",
-            "link": ["B", "D"],
-            "cost-link": [1, 1],
-            "connection": [0, 0], # 0 for internal, 1 for external
-            "server-port": 1024,
-            "con-network": ["192.168.1.0/24", "192.168.4.0/24"]
-        },
-        {
-            "router-name": "B",
-            "link": ["A", "C", "D"],
-            "cost-link": [1, 1, 1],
-            "connection": [0, 0, 0], # 0 for internal, 1 for external
-            "server-port": 1025,
-            "con-network": ["192.168.2.0/24"]
-        },
-        {
-            "router-name": "C",
-            "link": ["B", "F"],
-            "cost-link": [1, 1],
-            "connection": [0, 0], # 0 for internal, 1 for external
-            "server-port": 1026,
-            "con-network": ["192.168.3.0/24"]
-        },
-        {
-            "router-name": "D",
-            "link": ["A", "B", "E"],
-            "cost-link": [1, 1, 1],
-            "connection": [0, 0, 0], # 0 for internal, 1 for external
-            "server-port": 1027,
-            "con-network": ["192.168.4.0/24"]
-        },
-        {
-            "router-name": "E",
-            "link": ["D", "F"],
-            "cost-link": [1, 1],
-            "connection": [0, 0], # 0 for internal, 1 for external
-            "server-port": 1028,
-            "con-network": ["192.168.6.0/24"]
-        },
-        {
-            "router-name": "F",
-            "link": ["C", "E"],
-            "cost-link": [1, 1],
-            "connection": [0, 0], # 0 for internal, 1 for external
-            "server-port": 1029,
-            "con-network": ["192.168.5.0/24"]
-        }
-    ]
+# router_initial = [ #   **** need to input in a-z order ****
+#         {
+#             "router-name": "A",
+#             "link": ["B", "D"],
+#             "cost-link": [1, 1],
+#             "connection": [0, 0], # 0 for internal, 1 for external
+#             "server-port": 1024,
+#             "con-network": ["192.168.1.0/24", "192.168.4.0/24"]
+#         },
+#         {
+#             "router-name": "B",
+#             "link": ["A", "C", "D"],
+#             "cost-link": [1, 1, 1],
+#             "connection": [0, 0, 0], # 0 for internal, 1 for external
+#             "server-port": 1025,
+#             "con-network": ["192.168.2.0/24"]
+#         },
+#         {
+#             "router-name": "C",
+#             "link": ["B", "F"],
+#             "cost-link": [1, 1],
+#             "connection": [0, 0], # 0 for internal, 1 for external
+#             "server-port": 1026,
+#             "con-network": ["192.168.3.0/24"]
+#         },
+#         {
+#             "router-name": "D",
+#             "link": ["A", "B", "E"],
+#             "cost-link": [1, 1, 1],
+#             "connection": [0, 0, 0], # 0 for internal, 1 for external
+#             "server-port": 1027,
+#             "con-network": ["192.168.4.0/24"]
+#         },
+#         {
+#             "router-name": "E",
+#             "link": ["D", "F"],
+#             "cost-link": [1, 1],
+#             "connection": [0, 0], # 0 for internal, 1 for external
+#             "server-port": 1028,
+#             "con-network": ["192.168.6.0/24"]
+#         },
+#         {
+#             "router-name": "F",
+#             "link": ["C", "E"],
+#             "cost-link": [1, 1],
+#             "connection": [0, 0], # 0 for internal, 1 for external
+#             "server-port": 1029,
+#             "con-network": ["192.168.5.0/24"]
+#         }
+#     ]
+
+def get_router_profile():
+    with open("RouterProfile.txt") as file:
+        data = json.load(file)
+    return data
+
+router_initial = get_router_profile()
 
 def getConnection(dicts):
     ConnList = dicts[0]["connection"]
