@@ -257,6 +257,10 @@ def server(serverIP, clientPort):
                 routing_table.remove(item)
             else:
                 unique_combinations.add(item_tuple) # Add the tuple to the set
+        
+        for route in routing_table:
+            if route[2] > 15:
+                routing_table.remove(route)
 
         # print(routing_table)
 
