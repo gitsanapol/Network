@@ -6,7 +6,7 @@ import time
 import ast
 import random
 
-
+# RIP Protocal #
 
 hostname = gethostname()
 IP_host = gethostbyname(hostname)
